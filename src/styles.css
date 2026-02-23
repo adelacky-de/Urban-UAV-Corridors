@@ -269,36 +269,57 @@ body,
   display: flex;
   flex-direction: column;
   gap: 8px;
+  align-items: center;
 }
 
-.perspective-btn {
+.perspective-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.perspective-menu.expanded {
+  max-height: 300px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.perspective-icon-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
   background: rgba(15, 19, 35, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 999px;
+  border-radius: 50%;
   color: #e5eaf5;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   backdrop-filter: blur(10px);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
   transition: background 0.2s, transform 0.1s;
 }
 
-.perspective-btn:hover {
+.perspective-icon-btn:hover {
   background: rgba(45, 65, 105, 0.92);
   transform: translateY(-2px);
 }
 
-.perspective-btn:active {
+.perspective-icon-btn:active {
   transform: translateY(1px);
 }
 
-.perspective-icon {
-  font-size: 16px;
+.main-perspective-btn {
+  background: #2a3b61;
+  font-size: 20px;
+  border-color: rgba(91, 140, 255, 0.5);
 }
 
 /* ============================================================

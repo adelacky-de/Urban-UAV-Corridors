@@ -32,7 +32,7 @@ export function useCesiumViewer(
   const dataSource2dRef = useRef<Cesium.CustomDataSource | null>(null)
   const dataSource3dRef = useRef<Cesium.CustomDataSource | null>(null)
   const dataSourceHdbRef = useRef<Cesium.CustomDataSource | null>(null)
-  const selectedEntitiesRef = useRef<{ entity: Cesium.Entity; color: Cesium.Color }[]>([])
+  const selectedEntitiesRef = useRef<{ entity: Cesium.Entity; highlight: Cesium.Entity }[]>([])
 
   const onBoundsChangeRef = useRef(onBoundsChange)
   onBoundsChangeRef.current = onBoundsChange
@@ -134,19 +134,28 @@ export function useCesiumViewer(
         const alreadySelected = selectedEntitiesRef.current.some(s => s.entity === id)
         if (alreadySelected) return
 
-        // Read current colour before overwriting
-        const mat = id.polygon.material
-        let origColor = Cesium.Color.WHITE.clone()
-        if (mat instanceof Cesium.ColorMaterialProperty) {
-          const val = mat.color?.getValue(Cesium.JulianDate.now())
-          if (val instanceof Cesium.Color) origColor = val.clone()
-        }
-        selectedEntitiesRef.current.push({ entity: id, color: origColor })
+        // Instead of modifying the batched entity (which causes slow primitive rebuilds),
+        // we extract the geometry and draw an instant overlay entity on top.
+        const poly = id.polygon
+        const hierarchy = poly.hierarchy?.getValue(Cesium.JulianDate.now())
+        if (!hierarchy) return
 
-        // Highlight yellow
-        id.polygon.material = new Cesium.ColorMaterialProperty(
-          new Cesium.ConstantProperty(Cesium.Color.fromBytes(255, 220, 0, 220)),
-        )
+        const h = poly.height?.getValue(Cesium.JulianDate.now()) ?? 0
+        const exH = poly.extrudedHeight?.getValue(Cesium.JulianDate.now())
+
+        const highlightEntity = viewer.entities.add({
+          polygon: {
+            hierarchy: hierarchy,
+            height: h + 0.1, // slightly above to prevent z-fighting
+            extrudedHeight: exH !== undefined ? exH + 0.1 : undefined,
+            material: Cesium.Color.fromBytes(255, 220, 0, 180),
+            outline: true,
+            outlineColor: Cesium.Color.fromBytes(255, 255, 0, 255),
+            outlineWidth: 2,
+          }
+        })
+
+        selectedEntitiesRef.current.push({ entity: id, highlight: highlightEntity })
         
         const newInfo = { properties: props, layer }
         setSelected(prev => (prev ? [...prev, newInfo] : [newInfo]))
@@ -190,11 +199,10 @@ export function useCesiumViewer(
   }, [containerRef, setHovered, setSelected]) // exclude onBoundsChangeRef from deps
 
   const clearSelection = () => {
-    for (const item of selectedEntitiesRef.current) {
-      if (item.entity.polygon && item.color) {
-        item.entity.polygon.material = new Cesium.ColorMaterialProperty(
-          new Cesium.ConstantProperty(item.color),
-        )
+    const viewer = viewerRef.current
+    if (viewer) {
+      for (const item of selectedEntitiesRef.current) {
+        viewer.entities.remove(item.highlight)
       }
     }
     selectedEntitiesRef.current = []
