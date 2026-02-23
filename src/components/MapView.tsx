@@ -1,6 +1,5 @@
 /** Map container: Cesium, 2D/3D/HDB layers, tileset sync, navigation ball, layer panel, info bar. */
 import { useEffect, useMemo, useRef, useState } from 'react'
-import * as Cesium from 'cesium'
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 
 import type { LayersEnabled, LayerStyle } from '../App'

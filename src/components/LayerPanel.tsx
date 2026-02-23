@@ -127,16 +127,6 @@ export default function LayerPanel({
           onToggle={onToggle}
           onStyleChange={onStyleChange}
         />
-        <LayerRow
-          id="layerTileset"
-          label="3D Tileset"
-          enabled={layersEnabled.layerTileset}
-          style={layerStyles.layerTileset}
-          loading={false}
-          error={null}
-          onToggle={onToggle}
-          onStyleChange={onStyleChange}
-        />
       </div>
     </div>
   )
