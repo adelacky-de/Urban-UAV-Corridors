@@ -31,7 +31,6 @@ export function useCesiumViewer(
   const dataSource2dRef = useRef<Cesium.CustomDataSource | null>(null)
   const dataSource3dRef = useRef<Cesium.CustomDataSource | null>(null)
   const dataSourceHdbRef = useRef<Cesium.CustomDataSource | null>(null)
-  const dataSourceHdbRef = useRef<Cesium.CustomDataSource | null>(null)
   const selectedEntitiesRef = useRef<{ entity: Cesium.Entity; color: Cesium.Color }[]>([])
 
   useEffect(() => {
