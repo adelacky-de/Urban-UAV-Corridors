@@ -41,14 +41,18 @@ function LayerRow({ id, label, enabled, style, loading, error, onToggle, onStyle
         {error && <span className="status error" title={error}>error</span>}
       </label>
       <div className="layer-controls">
-        <label className="ctrl-label" title="Layer colour">
-          <input
-            type="color"
-            value={style.colorHex}
-            onChange={(e) => onStyleChange(id, { colorHex: e.target.value })}
-            className="color-swatch"
-          />
-        </label>
+        {id !== 'layer3d' ? (
+          <label className="ctrl-label" title="Layer colour">
+            <input
+              type="color"
+              value={style.colorHex}
+              onChange={(e) => onStyleChange(id, { colorHex: e.target.value })}
+              className="color-swatch"
+            />
+          </label>
+        ) : (
+          <div className="ctrl-label placeholder-swatch" title="Colour is fixed by priority"></div>
+        )}
         <label className="ctrl-label opacity-ctrl" title="Opacity">
           <span className="ctrl-icon">◑</span>
           <input

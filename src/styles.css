@@ -266,6 +266,9 @@ body,
   z-index: 10;
   right: 16px;
   bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .perspective-btn {
@@ -317,7 +320,11 @@ body,
   flex-direction: column;
   animation: slideUp 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   /* Don't overlap nav ball on right */
-  padding-right: 115px;
+  padding-right: 155px;
+}
+
+.info-bar-tall {
+  max-height: 40% !important;
 }
 
 @keyframes slideUp {
@@ -389,6 +396,71 @@ body,
   white-space: nowrap;
   max-width: 120px;
 }
+
+.clear-selection-btn {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.clear-selection-btn:hover {
+  background: rgba(239, 68, 68, 0.4);
+}
+
+.info-table-container {
+  padding: 0;
+  margin: 0;
+  display: block; /* override flex */
+  overflow: auto;
+}
+
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  color: #e0e8ff;
+  text-align: left;
+}
+
+.info-table th {
+  position: sticky;
+  top: 0;
+  background: rgba(15, 19, 35, 0.95);
+  padding: 6px 12px;
+  font-weight: 600;
+  color: rgba(180, 195, 240, 0.8);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.info-table td {
+  padding: 6px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  white-space: nowrap;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.info-table tr:hover td {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.badge-sm {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.badge-2d { background: rgba(59, 130, 246, 0.3); color: #93c5fd; }
+.badge-3d { background: rgba(16, 185, 129, 0.3); color: #6ee7b7; }
+.badge-hdb { background: rgba(245, 158, 11, 0.3); color: #fcd34d; }
 
 /* ============================================================
    EMPTY STATE

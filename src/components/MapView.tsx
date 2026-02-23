@@ -1,5 +1,5 @@
 /** Map container: Cesium, 2D/3D/HDB layers, tileset sync, navigation ball, layer panel, info bar. */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import * as Cesium from 'cesium'
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 
@@ -85,12 +85,10 @@ export default function MapView({
   const [selected, setSelected] = useState<SelectedInfo[] | null>(null)
   const [processing, setProcessing] = useState({ layer2d: false, layer3d: false, layerHdb: false })
 
-  const handleSetSelected = useCallback((info: SelectedInfo[] | null) => setSelected(info), [])
-
-  const { viewerRef, dataSource2dRef, dataSource3dRef, dataSourceHdbRef } = useCesiumViewer(
+  const { viewerRef, dataSource2dRef, dataSource3dRef, dataSourceHdbRef, clearSelection } = useCesiumViewer(
     containerRef,
     setHovered,
-    handleSetSelected,
+    setSelected,
     tilesetRef,
   )
 
@@ -213,7 +211,7 @@ export default function MapView({
 
       {hovered && <CorridorTooltip hovered={hovered} />}
       <PerspectiveButton viewerRef={viewerRef} />
-      <InfoBar selected={selected} />
+      <InfoBar selected={selected} onClear={clearSelection} />
     </div>
   )
 }

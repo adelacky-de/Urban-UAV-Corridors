@@ -1,5 +1,5 @@
-/** PerspectiveButton: Bottom-right button to cycle through multiple 3D/2D views. */
-import { useState, type RefObject } from 'react'
+/** PerspectiveButton: Bottom-right container with multiple direction buttons. */
+import type { RefObject } from 'react'
 import * as Cesium from 'cesium'
 
 type Props = {
@@ -7,23 +7,17 @@ type Props = {
 }
 
 const VIEWS = [
-  { label: 'Bird View', icon: '🗺️', height: 25000, pitch: -90, heading: 0 },
-  { label: 'Face North', icon: '⬆️', height: 350, pitch: -15, heading: 0 },
-  { label: 'Face East', icon: '➡️', height: 350, pitch: -15, heading: 90 },
-  { label: 'Face South', icon: '⬇️', height: 350, pitch: -15, heading: 180 },
-  { label: 'Face West', icon: '⬅️', height: 350, pitch: -15, heading: 270 },
+  { id: 'bird', label: 'Bird View', icon: '🗺️', height: 25000, pitch: -90, heading: 0 },
+  { id: 'north', label: 'Face North', icon: '⬆️', height: 350, pitch: -15, heading: 0 },
+  { id: 'east', label: 'Face East', icon: '➡️', height: 350, pitch: -15, heading: 90 },
+  { id: 'south', label: 'Face South', icon: '⬇️', height: 350, pitch: -15, heading: 180 },
+  { id: 'west', label: 'Face West', icon: '⬅️', height: 350, pitch: -15, heading: 270 },
 ]
 
 export default function PerspectiveButton({ viewerRef }: Props) {
-  const [viewIdx, setViewIdx] = useState(0)
-
-  const handleToggle = () => {
+  const handleFlyTo = (view: typeof VIEWS[0]) => {
     const viewer = viewerRef.current
     if (!viewer || viewer.isDestroyed()) return
-
-    const nextIdx = (viewIdx + 1) % VIEWS.length
-    setViewIdx(nextIdx)
-    const view = VIEWS[nextIdx]
 
     viewer.scene.camera.flyTo({
       destination: Cesium.Cartesian3.fromDegrees(103.8198, 1.3521, view.height),
@@ -36,18 +30,19 @@ export default function PerspectiveButton({ viewerRef }: Props) {
     })
   }
 
-  const currentView = VIEWS[viewIdx]
-
   return (
-    <div className="perspective-btn-container" aria-label="Camera perspective">
-      <button 
-        className="perspective-btn" 
-        onClick={handleToggle} 
-        title="Cycle View Perspective"
-      >
-        <span className="perspective-icon">{currentView.icon}</span>
-        <span className="perspective-label">{currentView.label}</span>
-      </button>
+    <div className="perspective-btn-container" aria-label="Camera perspectives">
+      {VIEWS.map((view) => (
+        <button
+          key={view.id}
+          className="perspective-btn"
+          onClick={() => handleFlyTo(view)}
+          title={view.label}
+        >
+          <span className="perspective-icon">{view.icon}</span>
+          <span className="perspective-label">{view.label}</span>
+        </button>
+      ))}
     </div>
   )
 }

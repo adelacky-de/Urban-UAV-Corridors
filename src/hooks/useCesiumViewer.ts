@@ -19,13 +19,14 @@ export type SelectedInfo = {
 export function useCesiumViewer(
   containerRef: RefObject<HTMLDivElement | null>,
   setHovered: (info: HoveredInfo | null) => void,
-  setSelected: (info: SelectedInfo[] | null) => void,
+  setSelected: (action: SelectedInfo[] | null | ((prev: SelectedInfo[] | null) => SelectedInfo[] | null)) => void,
   tilesetRef: RefObject<Cesium.Cesium3DTileset | null>,
 ): {
   viewerRef: RefObject<Cesium.Viewer | null>
   dataSource2dRef: RefObject<Cesium.CustomDataSource | null>
   dataSource3dRef: RefObject<Cesium.CustomDataSource | null>
   dataSourceHdbRef: RefObject<Cesium.CustomDataSource | null>
+  clearSelection: () => void
 } {
   const viewerRef = useRef<Cesium.Viewer | null>(null)
   const dataSource2dRef = useRef<Cesium.CustomDataSource | null>(null)
@@ -115,20 +116,12 @@ export function useCesiumViewer(
       }
     }, Cesium.ScreenSpaceEventType.MOUSE_MOVE)
 
-    // Click to select
+    // Click to select (accumulate)
     handler.setInputAction((click: { position: Cesium.Cartesian2 }) => {
-      // Restore previous selection colors
-      for (const item of selectedEntitiesRef.current) {
-        if (item.entity.polygon && item.color) {
-          item.entity.polygon.material = new Cesium.ColorMaterialProperty(
-            new Cesium.ConstantProperty(item.color),
-          )
-        }
-      }
-      selectedEntitiesRef.current = []
-
       const pickedObjects = viewer.scene.drillPick(click.position)
-      const selectedInfos: SelectedInfo[] = []
+      if (pickedObjects.length === 0) return // clicking nothing shouldn't clear, just ignore
+
+      const newInfos: SelectedInfo[] = []
 
       for (const picked of pickedObjects) {
         const id = (picked as { id?: unknown } | undefined)?.id as Cesium.Entity | undefined
@@ -137,6 +130,10 @@ export function useCesiumViewer(
         const layer = entity?._layer
 
         if (props && layer && id && id.polygon) {
+          // Check if already selected
+          const alreadySelected = selectedEntitiesRef.current.some(s => s.entity === id)
+          if (alreadySelected) continue
+
           // Read current colour before overwriting
           const mat = id.polygon.material
           let origColor = Cesium.Color.WHITE.clone()
@@ -150,14 +147,12 @@ export function useCesiumViewer(
           id.polygon.material = new Cesium.ColorMaterialProperty(
             new Cesium.ConstantProperty(Cesium.Color.fromBytes(255, 220, 0, 220)),
           )
-          selectedInfos.push({ properties: props, layer })
+          newInfos.push({ properties: props, layer })
         }
       }
 
-      if (selectedInfos.length > 0) {
-        setSelected(selectedInfos)
-      } else {
-        setSelected(null)
+      if (newInfos.length > 0) {
+        setSelected(prev => (prev ? [...prev, ...newInfos] : newInfos))
       }
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK)
 
@@ -186,5 +181,17 @@ export function useCesiumViewer(
     }
   }, [containerRef, setHovered, setSelected, tilesetRef])
 
-  return { viewerRef, dataSource2dRef, dataSource3dRef, dataSourceHdbRef }
+  const clearSelection = () => {
+    for (const item of selectedEntitiesRef.current) {
+      if (item.entity.polygon && item.color) {
+        item.entity.polygon.material = new Cesium.ColorMaterialProperty(
+          new Cesium.ConstantProperty(item.color),
+        )
+      }
+    }
+    selectedEntitiesRef.current = []
+    setSelected(() => null)
+  }
+
+  return { viewerRef, dataSource2dRef, dataSource3dRef, dataSourceHdbRef, clearSelection }
 }
