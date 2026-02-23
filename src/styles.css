@@ -1,5 +1,11 @@
 :root {
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Arial,
+    sans-serif;
   line-height: 1.4;
   color: #111827;
   background: #0b1020;
@@ -19,25 +25,128 @@ body,
   width: 100%;
 }
 
-.topbar {
+/* ============================================================
+   LAYER PANEL (top-left, collapsible)
+   ============================================================ */
+.layer-panel {
   position: absolute;
   z-index: 10;
   left: 12px;
   top: 12px;
-  max-width: min(720px, calc(100% - 24px));
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(17, 24, 39, 0.12);
-  border-radius: 10px;
-  padding: 10px 12px;
-  backdrop-filter: blur(6px);
+  width: 270px;
+  background: rgba(15, 19, 35, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
 }
 
-.topbar h1 {
-  font-size: 14px;
-  margin: 0 0 8px 0;
-  font-weight: 650;
+.layer-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 10px 14px;
+  color: #e5eaf5;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: background 0.15s;
 }
 
+.layer-panel-header:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.panel-icon {
+  font-size: 15px;
+  opacity: 0.8;
+}
+
+.panel-title {
+  flex: 1;
+  text-align: left;
+}
+
+.panel-chevron {
+  font-size: 10px;
+  opacity: 0.7;
+  transition: transform 0.2s;
+}
+
+.layer-panel-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.layer-panel--open .layer-panel-body {
+  max-height: 400px;
+}
+
+.layer-row {
+  padding: 8px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.layer-check-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+
+.layer-name {
+  flex: 1;
+  font-size: 12px;
+  color: #d1d9f0;
+  font-weight: 500;
+}
+
+.layer-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ctrl-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.ctrl-icon {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.color-swatch {
+  width: 24px;
+  height: 22px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  padding: 0;
+  background: none;
+}
+
+.opacity-ctrl {
+  flex: 1;
+}
+
+.opacity-slider {
+  width: 100%;
+  accent-color: #5b8cff;
+  cursor: pointer;
+}
+
+/* Status badges */
 .row {
   display: flex;
   gap: 10px;
@@ -51,39 +160,27 @@ body,
 }
 
 .status {
-  font-size: 12px;
-  padding: 4px 8px;
+  font-size: 11px;
+  padding: 2px 7px;
   border-radius: 999px;
   border: 1px solid rgba(17, 24, 39, 0.12);
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .status.loading {
-  border-color: rgba(59, 130, 246, 0.35);
-  color: rgb(29, 78, 216);
+  border-color: rgba(59, 130, 246, 0.5);
+  color: rgb(147, 197, 253);
 }
 
 .status.error {
-  border-color: rgba(239, 68, 68, 0.35);
-  color: rgb(185, 28, 28);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: rgb(252, 165, 165);
 }
 
-.slider {
-  display: grid;
-  gap: 4px;
-  min-width: 260px;
-}
-
-.slider label {
-  font-size: 12px;
-  color: rgba(17, 24, 39, 0.8);
-}
-
-.slider input[type='range'] {
-  width: 100%;
-}
-
-/* Map */
+/* ============================================================
+   MAP
+   ============================================================ */
 .map-root {
   height: 100%;
   width: 100%;
@@ -112,6 +209,9 @@ body,
   visibility: hidden !important;
 }
 
+/* ============================================================
+   HOVER TOOLTIP
+   ============================================================ */
 .tooltip {
   position: absolute;
   z-index: 20;
@@ -119,14 +219,14 @@ body,
   pointer-events: none;
   min-width: 220px;
   max-width: 320px;
-  background: rgba(17, 24, 39, 0.95);
-  color: #f9fafb;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(10, 14, 28, 0.96);
+  color: #f0f4ff;
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 10px;
   padding: 10px 10px;
   box-shadow:
-    0 10px 30px rgba(0, 0, 0, 0.35),
-    0 2px 6px rgba(0, 0, 0, 0.2);
+    0 10px 30px rgba(0, 0, 0, 0.45),
+    0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 .tooltip-title {
@@ -134,19 +234,20 @@ body,
   font-weight: 700;
   margin-bottom: 6px;
   opacity: 0.95;
+  color: #93c5fd;
 }
 
 .tooltip-row {
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  font-size: 12px;
-  line-height: 1.35;
+  font-size: 11px;
+  line-height: 1.4;
   padding: 2px 0;
 }
 
 .tooltip-k {
-  opacity: 0.8;
+  opacity: 0.65;
 }
 
 .tooltip-v {
@@ -157,31 +258,192 @@ body,
   white-space: nowrap;
 }
 
+/* ============================================================
+   CORNER NOTE (bottom-right status)
+   ============================================================ */
 .corner-note {
   position: absolute;
   z-index: 10;
   right: 12px;
-  bottom: 12px;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(17, 24, 39, 0.12);
+  bottom: 56px; /* moved up to make room for nav ball */
+  background: rgba(15, 19, 35, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 8px 12px;
   font-size: 12px;
-  color: rgba(17, 24, 39, 0.9);
+  color: rgba(225, 230, 255, 0.85);
   backdrop-filter: blur(6px);
 }
 
 .corner-note code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
-    'Courier New', monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 11px;
 }
 
 .note-muted {
   margin-top: 6px;
-  color: rgba(17, 24, 39, 0.72);
+  color: rgba(200, 210, 255, 0.55);
 }
 
+/* ============================================================
+   NAVIGATION BALL (bottom-right)
+   ============================================================ */
+.nav-ball {
+  position: absolute;
+  z-index: 10;
+  right: 12px;
+  bottom: 12px;
+  display: grid;
+  grid-template-areas:
+    ". n ."
+    "w c e"
+    ". s .";
+  grid-template-columns: 32px 32px 32px;
+  grid-template-rows: 32px 32px 32px;
+  gap: 3px;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: rgba(15, 19, 35, 0.88);
+  color: #c8d4f8;
+  font-size: 13px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(6px);
+  transition:
+    background 0.15s,
+    transform 0.1s;
+  width: 32px;
+  height: 32px;
+}
+
+.nav-btn:hover {
+  background: rgba(91, 140, 255, 0.35);
+  transform: scale(1.08);
+}
+
+.nav-btn:active {
+  transform: scale(0.95);
+}
+
+.nav-btn-n {
+  grid-area: n;
+}
+.nav-btn-s {
+  grid-area: s;
+}
+.nav-btn-w {
+  grid-area: w;
+}
+.nav-btn-e {
+  grid-area: e;
+}
+.nav-btn-c {
+  grid-area: c;
+  font-size: 16px;
+  color: #93c5fd;
+}
+
+/* ============================================================
+   INFO BAR (bottom, slide-up on selection)
+   ============================================================ */
+.info-bar {
+  position: absolute;
+  z-index: 10;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  max-height: 160px;
+  background: rgba(10, 14, 28, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Don't overlap nav ball on right */
+  padding-right: 115px;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.info-bar-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.info-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(91, 140, 255, 0.25);
+  color: #93c5fd;
+  border: 1px solid rgba(91, 140, 255, 0.4);
+}
+
+.info-bar-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(220, 228, 255, 0.9);
+}
+
+.info-bar-scroll {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 24px;
+  padding: 6px 14px 10px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.info-row {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  font-size: 11px;
+  min-width: 160px;
+  padding: 1px 0;
+}
+
+.info-k {
+  color: rgba(180, 195, 240, 0.65);
+  white-space: nowrap;
+}
+
+.info-v {
+  font-weight: 600;
+  color: #e0e8ff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 120px;
+}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
 .empty-state {
   height: 100%;
   width: 100%;
@@ -190,8 +452,16 @@ body,
   justify-items: center;
   padding: 24px;
   background:
-    radial-gradient(1200px 600px at 20% 10%, rgba(59, 130, 246, 0.22), transparent 60%),
-    radial-gradient(900px 520px at 80% 20%, rgba(236, 72, 153, 0.16), transparent 55%),
+    radial-gradient(
+      1200px 600px at 20% 10%,
+      rgba(59, 130, 246, 0.22),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 520px at 80% 20%,
+      rgba(236, 72, 153, 0.16),
+      transparent 55%
+    ),
     #0b1020;
   color: rgba(255, 255, 255, 0.92);
   text-align: center;
@@ -211,8 +481,6 @@ body,
 }
 
 .empty-state code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
-    'Courier New', monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 12px;
 }
-

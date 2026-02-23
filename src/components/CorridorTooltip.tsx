@@ -1,5 +1,5 @@
-/** Tooltip for hovered 2D/3D corridor (PLN_AREA_N, priorityID, altitude, etc.). */
-import type { CorridorProperties, Network3DProperties } from '../types/geojson'
+/** Tooltip for hovered 2D/3D corridor or HDB footprint (PLN_AREA_N, priorityID, altitude, etc.). */
+import type { CorridorProperties, HdbFootprintProperties, Network3DProperties } from '../types/geojson'
 import type { HoveredInfo } from '../hooks/useCesiumViewer'
 
 function formatVal(v: unknown): string {
@@ -24,7 +24,7 @@ export default function CorridorTooltip({ hovered }: { hovered: HoveredInfo }) {
       role="tooltip"
     >
       <div className="tooltip-title">
-        {hovered.layer === '2d' ? '2D Corridor' : '3D Network'}
+        {hovered.layer === '2d' ? '2D Corridor' : hovered.layer === '3d' ? '3D Network' : 'HDB Footprint'}
       </div>
       {hovered.layer === '2d' ? (
         <>
@@ -34,13 +34,19 @@ export default function CorridorTooltip({ hovered }: { hovered: HoveredInfo }) {
             <TooltipRow label="Pop_Density" value={(hovered.properties as CorridorProperties).Pop_Density} />
           )}
         </>
-      ) : (
+      ) : hovered.layer === '3d' ? (
         <>
           <TooltipRow label="min_altitude" value={(hovered.properties as Network3DProperties).min_altitude} />
           <TooltipRow label="max_altitude" value={(hovered.properties as Network3DProperties).max_altitude} />
           <TooltipRow label="corridor_type" value={(hovered.properties as Network3DProperties).corridor_type} />
           <TooltipRow label="priorityID" value={(hovered.properties as Network3DProperties).priorityID} />
           <TooltipRow label="volume_m3" value={(hovered.properties as Network3DProperties).volume_m3} />
+        </>
+      ) : (
+        <>
+          <TooltipRow label="height" value={(hovered.properties as HdbFootprintProperties).height} />
+          <TooltipRow label="levels" value={(hovered.properties as HdbFootprintProperties).levels} />
+          <TooltipRow label="feat_id" value={(hovered.properties as HdbFootprintProperties).feat_id} />
         </>
       )}
     </div>

@@ -44,3 +44,10 @@ export type Network3DProperties = {
   [key: string]: unknown
 }
 
+export type HdbFootprintProperties = {
+  feat_id?: string
+  height?: number | null
+  levels?: string
+  [key: string]: unknown
+}
+

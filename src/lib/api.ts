@@ -1,7 +1,8 @@
-/** Backend API: fetch 2D/3D corridors and 3D Tiles, validate GeoJSON. */
+/** Backend API: fetch 2D/3D corridors, 3D Tiles, and HDB footprints; validate GeoJSON. */
 import type {
   CorridorProperties,
   FeatureCollection,
+  HdbFootprintProperties,
   Network3DProperties,
 } from '../types/geojson'
 
@@ -107,4 +108,28 @@ export async function fetchHealth(opts?: {
     throw new Error('Invalid health response')
   }
   return json as { status: string }
+}
+
+export async function fetchHdbFootprints(opts?: {
+  signal?: AbortSignal
+}): Promise<FeatureCollection<HdbFootprintProperties>> {
+  const baseUrl = getApiBaseUrl()
+  const url = `${baseUrl}/hdb-footprints`
+
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+    signal: opts?.signal,
+  })
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(
+      `Failed to fetch hdb-footprints (${res.status} ${res.statusText})${text ? `: ${text}` : ''}`,
+    )
+  }
+
+  const json = (await res.json()) as unknown
+  assertFeatureCollection(json)
+  return json as FeatureCollection<HdbFootprintProperties>
 }
