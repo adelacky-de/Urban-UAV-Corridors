@@ -33,9 +33,14 @@ function assertFeatureCollection(json: unknown): asserts json is FeatureCollecti
 
 export async function fetch2dCorridors(opts?: {
   signal?: AbortSignal
+  bbox?: [number, number, number, number]
 }): Promise<FeatureCollection<CorridorProperties>> {
   const baseUrl = getApiBaseUrl()
-  const url = `${baseUrl}/2d-corridors`
+  let url = `${baseUrl}/2d-corridors`
+  if (opts?.bbox) {
+    const [minLon, minLat, maxLon, maxLat] = opts.bbox
+    url += `?min_lon=${minLon}&min_lat=${minLat}&max_lon=${maxLon}&max_lat=${maxLat}`
+  }
 
   const res = await fetch(url, {
     method: 'GET',
@@ -57,9 +62,14 @@ export async function fetch2dCorridors(opts?: {
 
 export async function fetch3dNetwork(opts?: {
   signal?: AbortSignal
+  bbox?: [number, number, number, number]
 }): Promise<FeatureCollection<Network3DProperties>> {
   const baseUrl = getApiBaseUrl()
-  const url = `${baseUrl}/3d-network`
+  let url = `${baseUrl}/3d-network`
+  if (opts?.bbox) {
+    const [minLon, minLat, maxLon, maxLat] = opts.bbox
+    url += `?min_lon=${minLon}&min_lat=${minLat}&max_lon=${maxLon}&max_lat=${maxLat}`
+  }
 
   const res = await fetch(url, {
     method: 'GET',
@@ -112,9 +122,14 @@ export async function fetchHealth(opts?: {
 
 export async function fetchHdbFootprints(opts?: {
   signal?: AbortSignal
+  bbox?: [number, number, number, number]
 }): Promise<FeatureCollection<HdbFootprintProperties>> {
   const baseUrl = getApiBaseUrl()
-  const url = `${baseUrl}/hdb-footprints`
+  let url = `${baseUrl}/hdb-footprints`
+  if (opts?.bbox) {
+    const [minLon, minLat, maxLon, maxLat] = opts.bbox
+    url += `?min_lon=${minLon}&min_lat=${minLat}&max_lon=${maxLon}&max_lat=${maxLat}`
+  }
 
   const res = await fetch(url, {
     method: 'GET',

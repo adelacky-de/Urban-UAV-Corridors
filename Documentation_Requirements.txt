@@ -18,10 +18,13 @@
 - default visible layer only building layer & 3D layer
 - the layer source box can be removed, the layer should be in the data bar
 - it required more time to load the building layer, using a circle load icon on the middle of the screen to show the wating process, it loading animation should end when the building is succesfully loaded.
+- the loading time for the dataset is too slow, i think it can be optimised by using bounding box conept to load only the object that with in the box since we are using api
 ## Aesthetic Requirements
 - 3D layer cannot change colour but the transparency only
 - the default colour of the 3D layer is based on the 
-- 
+- change the info bar, it should be in a table form without any block
+- do not use any emoji
+- remove the vite logo and change the html name
 
 ## Technical Considerations
 - 

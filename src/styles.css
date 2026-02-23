@@ -348,15 +348,11 @@ body,
 }
 
 .info-badge {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(91, 140, 255, 0.25);
   color: #93c5fd;
-  border: 1px solid rgba(91, 140, 255, 0.4);
 }
 
 .info-bar-title {
@@ -430,7 +426,6 @@ body,
 .info-table th {
   position: sticky;
   top: 0;
-  background: rgba(15, 19, 35, 0.95);
   padding: 6px 12px;
   font-weight: 600;
   color: rgba(180, 195, 240, 0.8);
@@ -451,16 +446,6 @@ body,
 .info-table tr:hover td {
   background: rgba(255, 255, 255, 0.05);
 }
-
-.badge-sm {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.badge-2d { background: rgba(59, 130, 246, 0.3); color: #93c5fd; }
-.badge-3d { background: rgba(16, 185, 129, 0.3); color: #6ee7b7; }
-.badge-hdb { background: rgba(245, 158, 11, 0.3); color: #fcd34d; }
 
 /* ============================================================
    EMPTY STATE

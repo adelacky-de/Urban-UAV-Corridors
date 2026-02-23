@@ -7,11 +7,11 @@ type Props = {
 }
 
 const VIEWS = [
-  { id: 'bird', label: 'Bird View', icon: '🗺️', height: 25000, pitch: -90, heading: 0 },
-  { id: 'north', label: 'Face North', icon: '⬆️', height: 350, pitch: -15, heading: 0 },
-  { id: 'east', label: 'Face East', icon: '➡️', height: 350, pitch: -15, heading: 90 },
-  { id: 'south', label: 'Face South', icon: '⬇️', height: 350, pitch: -15, heading: 180 },
-  { id: 'west', label: 'Face West', icon: '⬅️', height: 350, pitch: -15, heading: 270 },
+  { id: 'bird', label: 'Bird View', height: 25000, pitch: -90, heading: 0 },
+  { id: 'north', label: 'Face North', height: 350, pitch: -15, heading: 0 },
+  { id: 'east', label: 'Face East', height: 350, pitch: -15, heading: 90 },
+  { id: 'south', label: 'Face South', height: 350, pitch: -15, heading: 180 },
+  { id: 'west', label: 'Face West', height: 350, pitch: -15, heading: 270 },
 ]
 
 export default function PerspectiveButton({ viewerRef }: Props) {
@@ -39,7 +39,6 @@ export default function PerspectiveButton({ viewerRef }: Props) {
           onClick={() => handleFlyTo(view)}
           title={view.label}
         >
-          <span className="perspective-icon">{view.icon}</span>
           <span className="perspective-label">{view.label}</span>
         </button>
       ))}

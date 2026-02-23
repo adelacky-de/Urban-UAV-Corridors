@@ -54,7 +54,7 @@ function LayerRow({ id, label, enabled, style, loading, error, onToggle, onStyle
           <div className="ctrl-label placeholder-swatch" title="Colour is fixed by priority"></div>
         )}
         <label className="ctrl-label opacity-ctrl" title="Opacity">
-          <span className="ctrl-icon">◑</span>
+          <span className="ctrl-icon">Op:</span>
           <input
             type="range"
             min={0}
@@ -92,9 +92,8 @@ export default function LayerPanel({
         aria-expanded={open}
         aria-controls="layer-panel-body"
       >
-        <span className="panel-icon">⊞</span>
         <span className="panel-title">Layers</span>
-        <span className="panel-chevron">{open ? '▲' : '▼'}</span>
+        <span className="panel-chevron">{open ? '-' : '+'}</span>
       </button>
 
       <div id="layer-panel-body" className="layer-panel-body">

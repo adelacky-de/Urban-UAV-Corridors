@@ -55,7 +55,7 @@ export default function InfoBar({ selected, onClear }: Props) {
               const layerLabel = LAYER_LABELS[sel.layer] ?? sel.layer
               return (
                 <tr key={idx}>
-                  <td><span className={`badge-sm badge-${sel.layer}`}>{layerLabel}</span></td>
+                  <td>{layerLabel}</td>
                   {cols.map(c => (
                     <td key={c}>{formatVal(props[c])}</td>
                   ))}

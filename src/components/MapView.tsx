@@ -34,6 +34,7 @@ type Props = {
   errorHdb: string | null
   onToggleLayer: (key: keyof LayersEnabled) => void
   onLayerStyleChange: (key: keyof LayersEnabled, style: Partial<LayerStyle>) => void
+  onBoundsChange: (bbox: [number, number, number, number]) => void
 }
 
 function computePriorityRange2d(
@@ -77,6 +78,7 @@ export default function MapView({
   errorHdb,
   onToggleLayer,
   onLayerStyleChange,
+  onBoundsChange,
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const tilesetRef = useRef<Cesium.Cesium3DTileset | null>(null)
@@ -90,6 +92,7 @@ export default function MapView({
     setHovered,
     setSelected,
     tilesetRef,
+    onBoundsChange,
   )
 
   const priorityRange2d = useMemo(() => computePriorityRange2d(data2d), [data2d])

@@ -21,6 +21,7 @@ export function useCesiumViewer(
   setHovered: (info: HoveredInfo | null) => void,
   setSelected: (action: SelectedInfo[] | null | ((prev: SelectedInfo[] | null) => SelectedInfo[] | null)) => void,
   tilesetRef: RefObject<Cesium.Cesium3DTileset | null>,
+  onBoundsChange?: (bbox: [number, number, number, number]) => void
 ): {
   viewerRef: RefObject<Cesium.Viewer | null>
   dataSource2dRef: RefObject<Cesium.CustomDataSource | null>
@@ -33,6 +34,9 @@ export function useCesiumViewer(
   const dataSource3dRef = useRef<Cesium.CustomDataSource | null>(null)
   const dataSourceHdbRef = useRef<Cesium.CustomDataSource | null>(null)
   const selectedEntitiesRef = useRef<{ entity: Cesium.Entity; color: Cesium.Color }[]>([])
+
+  const onBoundsChangeRef = useRef(onBoundsChange)
+  onBoundsChangeRef.current = onBoundsChange
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -161,7 +165,28 @@ export function useCesiumViewer(
     dataSource3dRef.current = ds3d
     dataSourceHdbRef.current = dsHdb
 
+    let timeout: ReturnType<typeof setTimeout>
+    const handleMoveEnd = () => {
+      clearTimeout(timeout)
+      timeout = setTimeout(() => {
+        const rect = viewer.camera.computeViewRectangle(viewer.scene.globe.ellipsoid)
+        if (rect && onBoundsChangeRef.current) {
+          const west = Cesium.Math.toDegrees(rect.west)
+          const south = Cesium.Math.toDegrees(rect.south)
+          const east = Cesium.Math.toDegrees(rect.east)
+          const north = Cesium.Math.toDegrees(rect.north)
+          onBoundsChangeRef.current([west, south, east, north])
+        }
+      }, 500)
+    }
+
+    viewer.camera.moveEnd.addEventListener(handleMoveEnd)
+    // Trigger initially once camera settles
+    handleMoveEnd()
+
     return () => {
+      clearTimeout(timeout)
+      viewer.camera.moveEnd.removeEventListener(handleMoveEnd)
       handler.destroy()
       const tileset = tilesetRef.current
       if (tileset) {
@@ -179,7 +204,7 @@ export function useCesiumViewer(
       dataSource3dRef.current = null
       dataSourceHdbRef.current = null
     }
-  }, [containerRef, setHovered, setSelected, tilesetRef])
+  }, [containerRef, setHovered, setSelected, tilesetRef]) // exclude onBoundsChangeRef from deps
 
   const clearSelection = () => {
     for (const item of selectedEntitiesRef.current) {
