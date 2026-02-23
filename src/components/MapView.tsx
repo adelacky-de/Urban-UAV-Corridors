@@ -80,12 +80,12 @@ export default function MapView({
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const tilesetRef = useRef<Cesium.Cesium3DTileset | null>(null)
-  const [tilesetState, setTilesetState] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle')
-  const [tilesetError, setTilesetError] = useState<string | null>(null)
-  const [hovered, setHovered] = useState<HoveredInfo | null>(null)
-  const [selected, setSelected] = useState<SelectedInfo | null>(null)
 
-  const handleSetSelected = useCallback((info: SelectedInfo | null) => setSelected(info), [])
+  const [hovered, setHovered] = useState<HoveredInfo | null>(null)
+  const [selected, setSelected] = useState<SelectedInfo[] | null>(null)
+  const [processing, setProcessing] = useState({ layer2d: false, layer3d: false, layerHdb: false })
+
+  const handleSetSelected = useCallback((info: SelectedInfo[] | null) => setSelected(info), [])
 
   const { viewerRef, dataSource2dRef, dataSource3dRef, dataSourceHdbRef } = useCesiumViewer(
     containerRef,
@@ -99,6 +99,8 @@ export default function MapView({
 
   // 2D corridors
   useEffect(() => {
+    const controller = new AbortController()
+    setProcessing((p) => ({ ...p, layer2d: true }))
     sync2dCorridorLayer(
       dataSource2dRef.current,
       data2d,
@@ -106,11 +108,17 @@ export default function MapView({
       layersEnabled.layer2d,
       layerStyles.layer2d.colorHex,
       layerStyles.layer2d.alpha,
-    )
+      controller.signal,
+    ).then(() => {
+      if (!controller.signal.aborted) setProcessing((p) => ({ ...p, layer2d: false }))
+    })
+    return () => controller.abort()
   }, [dataSource2dRef, data2d, priorityRange2d, layersEnabled.layer2d, layerStyles.layer2d])
 
   // 3D network
   useEffect(() => {
+    const controller = new AbortController()
+    setProcessing((p) => ({ ...p, layer3d: true }))
     sync3dCorridorLayer(
       dataSource3dRef.current,
       data3d,
@@ -118,18 +126,28 @@ export default function MapView({
       layersEnabled.layer3d,
       layerStyles.layer3d.colorHex,
       layerStyles.layer3d.alpha,
-    )
+      controller.signal,
+    ).then(() => {
+      if (!controller.signal.aborted) setProcessing((p) => ({ ...p, layer3d: false }))
+    })
+    return () => controller.abort()
   }, [dataSource3dRef, data3d, priorityRange3d, layersEnabled.layer3d, layerStyles.layer3d])
 
   // HDB footprints
   useEffect(() => {
+    const controller = new AbortController()
+    setProcessing((p) => ({ ...p, layerHdb: true }))
     syncHdbFootprintLayer(
       dataSourceHdbRef.current,
       dataHdb,
       layersEnabled.layerHdb,
       layerStyles.layerHdb.colorHex,
       layerStyles.layerHdb.alpha,
-    )
+      controller.signal,
+    ).then(() => {
+      if (!controller.signal.aborted) setProcessing((p) => ({ ...p, layerHdb: false }))
+    })
+    return () => controller.abort()
   }, [dataSourceHdbRef, dataHdb, layersEnabled.layerHdb, layerStyles.layerHdb])
 
   // 3D Tileset
@@ -143,15 +161,11 @@ export default function MapView({
           ;(tilesetRef.current as unknown as { destroy?: () => void }).destroy?.()
         } catch { /* ignore */ }
         tilesetRef.current = null
-        setTilesetState('idle')
-        setTilesetError(null)
       }
       return
     }
 
     let cancelled = false
-    setTilesetState('loading')
-    setTilesetError(null)
 
     Cesium.Cesium3DTileset.fromUrl(tilesetUrl, {})
       .then((tileset) => {
@@ -161,21 +175,17 @@ export default function MapView({
         }
         viewer.scene.primitives.add(tileset)
         tilesetRef.current = tileset
-        setTilesetState('loaded')
       })
       .catch((e: unknown) => {
         if (cancelled) return
-        const msg = e instanceof Error ? e.message : String(e)
-        setTilesetState('error')
-        setTilesetError(msg)
         console.error('Failed to load 3D tileset', e)
       })
 
     return () => { cancelled = true }
   }, [viewerRef, layersEnabled.layerTileset, tilesetUrl])
 
-  // Check if any primary data layer is loading
-  const isLoading = loading2d || loading3d || loadingHdb;
+  // Check if any primary data layer is loaded or processing geometries
+  const isLoading = loading2d || loading3d || loadingHdb || processing.layer2d || processing.layer3d || processing.layerHdb;
 
   return (
     <div className="map-root">

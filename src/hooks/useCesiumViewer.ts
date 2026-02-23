@@ -19,7 +19,7 @@ export type SelectedInfo = {
 export function useCesiumViewer(
   containerRef: RefObject<HTMLDivElement | null>,
   setHovered: (info: HoveredInfo | null) => void,
-  setSelected: (info: SelectedInfo | null) => void,
+  setSelected: (info: SelectedInfo[] | null) => void,
   tilesetRef: RefObject<Cesium.Cesium3DTileset | null>,
 ): {
   viewerRef: RefObject<Cesium.Viewer | null>
@@ -31,8 +31,8 @@ export function useCesiumViewer(
   const dataSource2dRef = useRef<Cesium.CustomDataSource | null>(null)
   const dataSource3dRef = useRef<Cesium.CustomDataSource | null>(null)
   const dataSourceHdbRef = useRef<Cesium.CustomDataSource | null>(null)
-  const selectedEntityRef = useRef<Cesium.Entity | null>(null)
-  const selectedOrigColorRef = useRef<Cesium.Color | null>(null)
+  const dataSourceHdbRef = useRef<Cesium.CustomDataSource | null>(null)
+  const selectedEntitiesRef = useRef<{ entity: Cesium.Entity; color: Cesium.Color }[]>([])
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -118,42 +118,46 @@ export function useCesiumViewer(
 
     // Click to select
     handler.setInputAction((click: { position: Cesium.Cartesian2 }) => {
-      const picked = viewer.scene.pick(click.position)
-      const id = (picked as { id?: unknown } | undefined)?.id as Cesium.Entity | undefined
-      const entity = id as unknown as EntityWithCorridor
-
-      // Restore previous selection colour
-      if (selectedEntityRef.current?.polygon && selectedOrigColorRef.current) {
-        const prevMat = selectedEntityRef.current.polygon.material
-        if (prevMat instanceof Cesium.ColorMaterialProperty) {
-          selectedEntityRef.current.polygon.material = new Cesium.ColorMaterialProperty(
-            new Cesium.ConstantProperty(selectedOrigColorRef.current),
+      // Restore previous selection colors
+      for (const item of selectedEntitiesRef.current) {
+        if (item.entity.polygon && item.color) {
+          item.entity.polygon.material = new Cesium.ColorMaterialProperty(
+            new Cesium.ConstantProperty(item.color),
           )
         }
       }
+      selectedEntitiesRef.current = []
 
-      const props = entity?._corridorProps
-      const layer = entity?._layer
+      const pickedObjects = viewer.scene.drillPick(click.position)
+      const selectedInfos: SelectedInfo[] = []
 
-      if (props && layer && id) {
-        // Read current colour before overwriting
-        const mat = id.polygon?.material
-        let origColor = Cesium.Color.WHITE.clone()
-        if (mat instanceof Cesium.ColorMaterialProperty) {
-          const val = mat.color?.getValue(Cesium.JulianDate.now())
-          if (val instanceof Cesium.Color) origColor = val.clone()
+      for (const picked of pickedObjects) {
+        const id = (picked as { id?: unknown } | undefined)?.id as Cesium.Entity | undefined
+        const entity = id as unknown as EntityWithCorridor
+        const props = entity?._corridorProps
+        const layer = entity?._layer
+
+        if (props && layer && id && id.polygon) {
+          // Read current colour before overwriting
+          const mat = id.polygon.material
+          let origColor = Cesium.Color.WHITE.clone()
+          if (mat instanceof Cesium.ColorMaterialProperty) {
+            const val = mat.color?.getValue(Cesium.JulianDate.now())
+            if (val instanceof Cesium.Color) origColor = val.clone()
+          }
+          selectedEntitiesRef.current.push({ entity: id, color: origColor })
+
+          // Highlight yellow
+          id.polygon.material = new Cesium.ColorMaterialProperty(
+            new Cesium.ConstantProperty(Cesium.Color.fromBytes(255, 220, 0, 220)),
+          )
+          selectedInfos.push({ properties: props, layer })
         }
-        selectedEntityRef.current = id
-        selectedOrigColorRef.current = origColor
+      }
 
-        // Highlight yellow
-        id.polygon!.material = new Cesium.ColorMaterialProperty(
-          new Cesium.ConstantProperty(Cesium.Color.fromBytes(255, 220, 0, 220)),
-        )
-        setSelected({ properties: props, layer })
+      if (selectedInfos.length > 0) {
+        setSelected(selectedInfos)
       } else {
-        selectedEntityRef.current = null
-        selectedOrigColorRef.current = null
         setSelected(null)
       }
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK)

@@ -143,35 +143,58 @@ export function sync2dCorridorLayer(
   enabled: boolean,
   colorHex?: string,
   alpha?: number,
-): void {
-  if (!ds) return
-  ds.entities.removeAll()
-  if (!enabled || !data) return
+  signal?: AbortSignal,
+): Promise<void> {
+  return new Promise((resolve) => {
+    if (!ds) return resolve()
+    ds.entities.removeAll()
+    if (!enabled || !data) return resolve()
 
-  for (const feature of data.features) {
-    const geom = feature.geometry
-    if (!geom) continue
-    const props = feature.properties ?? {}
-    let material = getColor2d(props, priorityRange)
-    if (colorHex) {
-      material = hexToColor(colorHex, alpha ?? material.alpha)
-    } else if (alpha !== undefined) {
-      material = applyAlpha(material, alpha)
-    }
+    const features = data.features
+    let i = 0
 
-    const addRings = (rings: Position[][]) => {
-      if (!rings[0] || rings[0].length < 3) return
-      addPolygon2d(ds!, rings, material, props as CorridorProperties)
-    }
+    function processChunk() {
+      if (signal?.aborted) return resolve()
 
-    if (geom.type === 'Polygon') {
-      addRings(geom.coordinates as Position[][])
-    } else if (geom.type === 'MultiPolygon') {
-      for (const poly of geom.coordinates as Position[][][]) {
-        addRings(poly)
+      const end = Math.min(i + 200, features.length)
+      if (i < end) ds!.entities.suspendEvents()
+      
+      for (; i < end; i++) {
+        const feature = features[i]
+        const geom = feature.geometry
+        if (!geom) continue
+        const props = feature.properties ?? {}
+        let material = getColor2d(props, priorityRange)
+        if (colorHex) {
+          material = hexToColor(colorHex, alpha ?? material.alpha)
+        } else if (alpha !== undefined) {
+          material = applyAlpha(material, alpha)
+        }
+
+        const addRings = (rings: Position[][]) => {
+          if (!rings[0] || rings[0].length < 3) return
+          addPolygon2d(ds!, rings, material, props as CorridorProperties)
+        }
+
+        if (geom.type === 'Polygon') {
+          addRings(geom.coordinates as Position[][])
+        } else if (geom.type === 'MultiPolygon') {
+          for (const poly of geom.coordinates as Position[][][]) {
+            addRings(poly)
+          }
+        }
+      }
+      
+      if (i > 0) ds!.entities.resumeEvents()
+
+      if (i < features.length) {
+        requestAnimationFrame(processChunk)
+      } else {
+        resolve()
       }
     }
-  }
+    processChunk()
+  })
 }
 
 export function sync3dCorridorLayer(
@@ -181,37 +204,60 @@ export function sync3dCorridorLayer(
   enabled: boolean,
   colorHex?: string,
   alpha?: number,
-): void {
-  if (!ds) return
-  ds.entities.removeAll()
-  if (!enabled || !data) return
+  signal?: AbortSignal,
+): Promise<void> {
+  return new Promise((resolve) => {
+    if (!ds) return resolve()
+    ds.entities.removeAll()
+    if (!enabled || !data) return resolve()
 
-  for (const feature of data.features) {
-    const geom = feature.geometry
-    if (!geom) continue
-    const props = feature.properties ?? {}
-    const minAlt = typeof props.min_altitude === 'number' ? props.min_altitude : 0
-    const maxAlt = typeof props.max_altitude === 'number' ? props.max_altitude : minAlt + 100
-    let material = getColor3d(props, priorityRange)
-    if (colorHex) {
-      material = hexToColor(colorHex, alpha ?? material.alpha)
-    } else if (alpha !== undefined) {
-      material = applyAlpha(material, alpha)
-    }
+    const features = data.features
+    let i = 0
 
-    const addRings = (rings: Position[][]) => {
-      if (!rings[0] || rings[0].length < 3) return
-      addPolygon3d(ds!, rings, minAlt, maxAlt, material, props)
-    }
+    function processChunk() {
+      if (signal?.aborted) return resolve()
 
-    if (geom.type === 'Polygon') {
-      addRings(geom.coordinates as Position[][])
-    } else if (geom.type === 'MultiPolygon') {
-      for (const poly of geom.coordinates as Position[][][]) {
-        addRings(poly)
+      const end = Math.min(i + 200, features.length)
+      if (i < end) ds!.entities.suspendEvents()
+      
+      for (; i < end; i++) {
+        const feature = features[i]
+        const geom = feature.geometry
+        if (!geom) continue
+        const props = feature.properties ?? {}
+        const minAlt = typeof props.min_altitude === 'number' ? props.min_altitude : 0
+        const maxAlt = typeof props.max_altitude === 'number' ? props.max_altitude : minAlt + 100
+        let material = getColor3d(props, priorityRange)
+        if (colorHex) {
+          material = hexToColor(colorHex, alpha ?? material.alpha)
+        } else if (alpha !== undefined) {
+          material = applyAlpha(material, alpha)
+        }
+
+        const addRings = (rings: Position[][]) => {
+          if (!rings[0] || rings[0].length < 3) return
+          addPolygon3d(ds!, rings, minAlt, maxAlt, material, props)
+        }
+
+        if (geom.type === 'Polygon') {
+          addRings(geom.coordinates as Position[][])
+        } else if (geom.type === 'MultiPolygon') {
+          for (const poly of geom.coordinates as Position[][][]) {
+            addRings(poly)
+          }
+        }
+      }
+      
+      if (i > 0) ds!.entities.resumeEvents()
+
+      if (i < features.length) {
+        requestAnimationFrame(processChunk)
+      } else {
+        resolve()
       }
     }
-  }
+    processChunk()
+  })
 }
 
 const HDB_DEFAULT_COLOR = Cesium.Color.fromBytes(180, 150, 110, 140)
@@ -222,44 +268,67 @@ export function syncHdbFootprintLayer(
   enabled: boolean,
   colorHex?: string,
   alpha?: number,
-): void {
-  if (!ds) return
-  ds.entities.removeAll()
-  if (!enabled || !data) return
+  signal?: AbortSignal,
+): Promise<void> {
+  return new Promise((resolve) => {
+    if (!ds) return resolve()
+    ds.entities.removeAll()
+    if (!enabled || !data) return resolve()
 
-  for (const feature of data.features) {
-    const geom = feature.geometry
-    if (!geom) continue
-    const props = feature.properties ?? {}
-    let material = HDB_DEFAULT_COLOR.clone()
-    if (colorHex) {
-      material = hexToColor(colorHex, alpha ?? material.alpha)
-    } else if (alpha !== undefined) {
-      material = applyAlpha(material, alpha)
-    }
+    const features = data.features
+    let i = 0
 
-    let h = 0;
-    if (typeof props.height === 'number' && props.height > 0) {
-      h = props.height;
-    } else if (typeof props.levels === 'number') {
-      h = props.levels * 3;
-    } else if (typeof props.levels === 'string' && !isNaN(Number(props.levels))) {
-      h = Number(props.levels) * 3;
-    } else {
-      h = 10; // default generic height if nothing
-    }
+    function processChunk() {
+      if (signal?.aborted) return resolve()
 
-    const addRings = (rings: Position[][]) => {
-      if (!rings[0] || rings[0].length < 3) return
-      addPolygonHdb(ds!, rings, h, material, props as HdbFootprintProperties)
-    }
+      const end = Math.min(i + 200, features.length)
+      if (i < end) ds!.entities.suspendEvents()
+      
+      for (; i < end; i++) {
+        const feature = features[i]
+        const geom = feature.geometry
+        if (!geom) continue
+        const props = feature.properties ?? {}
+        let material = HDB_DEFAULT_COLOR.clone()
+        if (colorHex) {
+          material = hexToColor(colorHex, alpha ?? material.alpha)
+        } else if (alpha !== undefined) {
+          material = applyAlpha(material, alpha)
+        }
 
-    if (geom.type === 'Polygon') {
-      addRings(geom.coordinates as Position[][])
-    } else if (geom.type === 'MultiPolygon') {
-      for (const poly of geom.coordinates as Position[][][]) {
-        addRings(poly)
+        let h = 0;
+        if (typeof props.height === 'number' && props.height > 0) {
+          h = props.height;
+        } else if (typeof props.levels === 'number') {
+          h = props.levels * 3;
+        } else if (typeof props.levels === 'string' && !isNaN(Number(props.levels))) {
+          h = Number(props.levels) * 3;
+        } else {
+          h = 10; // default generic height if nothing
+        }
+
+        const addRings = (rings: Position[][]) => {
+          if (!rings[0] || rings[0].length < 3) return
+          addPolygonHdb(ds!, rings, h, material, props as HdbFootprintProperties)
+        }
+
+        if (geom.type === 'Polygon') {
+          addRings(geom.coordinates as Position[][])
+        } else if (geom.type === 'MultiPolygon') {
+          for (const poly of geom.coordinates as Position[][][]) {
+            addRings(poly)
+          }
+        }
+      }
+      
+      if (i > 0) ds!.entities.resumeEvents()
+
+      if (i < features.length) {
+        requestAnimationFrame(processChunk)
+      } else {
+        resolve()
       }
     }
-  }
+    processChunk()
+  })
 }

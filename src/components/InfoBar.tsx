@@ -1,6 +1,5 @@
-/** InfoBar: bottom bar showing clicked polygon properties. */
+/** InfoBar: bottom bar showing clicked polygon properties (accumulates overlapping layers). */
 import type { SelectedInfo } from '../hooks/useCesiumViewer'
-import type { CorridorProperties, HdbFootprintProperties, Network3DProperties } from '../types/geojson'
 
 const LAYER_LABELS: Record<string, string> = {
   '2d': '2D Corridor',
@@ -14,7 +13,7 @@ function formatVal(v: unknown): string {
   return String(v)
 }
 
-function renderRows(props: Record<string, unknown>) {
+function renderRows(props: Record<string, unknown>): React.ReactNode[] {
   return Object.entries(props)
     .filter(([k]) => !k.startsWith('_'))
     .slice(0, 12)
@@ -27,23 +26,31 @@ function renderRows(props: Record<string, unknown>) {
 }
 
 type Props = {
-  selected: SelectedInfo | null
+  selected: SelectedInfo[] | null
 }
 
 export default function InfoBar({ selected }: Props) {
-  if (!selected) return null
-
-  const props = selected.properties as Record<string, unknown>
-  const label = LAYER_LABELS[selected.layer] ?? selected.layer
+  if (!selected || selected.length === 0) return null
 
   return (
     <div className="info-bar" role="region" aria-label="Feature info">
-      <div className="info-bar-header">
-        <span className="info-badge">{label}</span>
-        <span className="info-bar-title">Feature Properties</span>
-      </div>
       <div className="info-bar-scroll">
-        {renderRows(props)}
+        {selected.map((sel, idx) => {
+          const props = sel.properties as Record<string, unknown>
+          const label = LAYER_LABELS[sel.layer] ?? sel.layer
+          const titleId = props.feat_id || props.priorityID || 'Properties'
+          return (
+            <div key={idx} className="info-bar-item">
+              <div className="info-bar-header">
+                <span className="info-badge">{label}</span>
+                <span className="info-bar-title">Feature {titleId}</span>
+              </div>
+              <div className="info-bar-props">
+                {renderRows(props)}
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
