@@ -24,9 +24,21 @@ function ringToDegreesFlat(ring: Position[]): number[] {
   const out: number[] = []
   for (const p of ring) {
     if (Array.isArray(p) && typeof p[0] === 'number' && typeof p[1] === 'number' && !Number.isNaN(p[0]) && !Number.isNaN(p[1])) {
+      // Deduplicate consecutive identical points
+      if (out.length >= 2) {
+        const lastLon = out[out.length - 2]
+        const lastLat = out[out.length - 1]
+        if (Math.abs(p[0] - lastLon) < 1e-10 && Math.abs(p[1] - lastLat) < 1e-10) {
+          continue // skip duplicate
+        }
+      }
       out.push(p[0], p[1])
     }
   }
+  // GeoJSON says first and last should be identical. If our deduplication 
+  // stripped the last one, that's fine, Cesium handles unclosed loops. 
+  // However, if the first and last are identical and we *did* push it, we should ensure 
+  // it has at least 3 *unique* vertices (which means 4 points if closed, or 3 if unclosed).
   return out
 }
 
