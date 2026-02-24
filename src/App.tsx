@@ -49,7 +49,6 @@ function App() {
   const [errorHdb, setErrorHdb] = useState<string | null>(null)
   const [layersEnabled, setLayersEnabled] = useState<LayersEnabled>(DEFAULT_LAYERS)
   const [layerStyles, setLayerStyles] = useState<Record<keyof LayersEnabled, LayerStyle>>(DEFAULT_STYLES)
-  const [mapBbox, setMapBbox] = useState<[number, number, number, number] | null>(null)
 
   const baseUrl = useMemo(() => getApiBaseUrl(), [])
 
@@ -61,54 +60,56 @@ function App() {
     setLayerStyles((prev) => ({ ...prev, [key]: { ...prev[key], ...style } }))
   }, [])
 
-  const handleBoundsChange = useCallback((bbox: [number, number, number, number]) => {
-    setMapBbox(bbox)
-  }, [])
-
   useEffect(() => {
-    if (!mapBbox || !layersEnabled.layer2d) {
+    if (!layersEnabled.layer2d) {
       setLoading2d(false)
       return
     }
+    if (data2d) return // Already loaded
+    
     const controller = new AbortController()
     const { signal } = controller
     setLoading2d(true); setError2d(null)
-    fetch2dCorridors({ signal, bbox: mapBbox })
+    fetch2dCorridors({ signal })
       .then(setData2d)
       .catch((e: unknown) => { if (!signal.aborted) { setData2d(null); setError2d(e instanceof Error ? e.message : String(e)) } })
       .finally(() => { if (!signal.aborted) setLoading2d(false) })
     return () => controller.abort()
-  }, [baseUrl, mapBbox, layersEnabled.layer2d])
+  }, [baseUrl, layersEnabled.layer2d, data2d])
 
   useEffect(() => {
-    if (!mapBbox || !layersEnabled.layer3d) {
+    if (!layersEnabled.layer3d) {
       setLoading3d(false)
       return
     }
+    if (data3d) return // Already loaded
+
     const controller = new AbortController()
     const { signal } = controller
     setLoading3d(true); setError3d(null)
-    fetch3dNetwork({ signal, bbox: mapBbox })
+    fetch3dNetwork({ signal })
       .then(setData3d)
       .catch((e: unknown) => { if (!signal.aborted) { setData3d(null); setError3d(e instanceof Error ? e.message : String(e)) } })
       .finally(() => { if (!signal.aborted) setLoading3d(false) })
     return () => controller.abort()
-  }, [baseUrl, mapBbox, layersEnabled.layer3d])
+  }, [baseUrl, layersEnabled.layer3d, data3d])
 
   useEffect(() => {
-    if (!mapBbox || !layersEnabled.layerHdb) {
+    if (!layersEnabled.layerHdb) {
       setLoadingHdb(false)
       return
     }
+    if (dataHdb) return // Already loaded
+
     const controller = new AbortController()
     const { signal } = controller
     setLoadingHdb(true); setErrorHdb(null)
-    fetchHdbFootprints({ signal, bbox: mapBbox })
+    fetchHdbFootprints({ signal })
       .then(setDataHdb)
       .catch((e: unknown) => { if (!signal.aborted) { setDataHdb(null); setErrorHdb(e instanceof Error ? e.message : String(e)) } })
       .finally(() => { if (!signal.aborted) setLoadingHdb(false) })
     return () => controller.abort()
-  }, [baseUrl, mapBbox, layersEnabled.layerHdb])
+  }, [baseUrl, layersEnabled.layerHdb, dataHdb])
 
   return (
     <div className="app-shell">
@@ -126,7 +127,7 @@ function App() {
         errorHdb={errorHdb}
         onToggleLayer={toggleLayer}
         onLayerStyleChange={setLayerStyle}
-        onBoundsChange={handleBoundsChange}
+        onBoundsChange={() => {}}
       />
     </div>
   )
