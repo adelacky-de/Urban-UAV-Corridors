@@ -23,22 +23,26 @@ export interface EntityWithCorridor {
 function ringToDegreesFlat(ring: Position[]): number[] {
   const out: number[] = []
   for (const p of ring) {
-    out.push(p[0], p[1])
+    if (Array.isArray(p) && typeof p[0] === 'number' && typeof p[1] === 'number' && !Number.isNaN(p[0]) && !Number.isNaN(p[1])) {
+      out.push(p[0], p[1])
+    }
   }
   return out
 }
 
-function buildPolygonHierarchy(rings: Position[][]): Cesium.PolygonHierarchy {
-  if (!rings[0] || rings[0].length < 3) {
-    throw new Error('Ring must have at least 3 positions')
-  }
+function buildPolygonHierarchy(rings: Position[][]): Cesium.PolygonHierarchy | null {
+  if (!rings || !rings[0]) return null
+  const outerCoords = ringToDegreesFlat(rings[0])
+  if (outerCoords.length < 6) return null // Need at least 3 [lon, lat] pairs
+
+  const holes = rings.slice(1)
+    .map(hole => ringToDegreesFlat(hole))
+    .filter(holeCoords => holeCoords.length >= 6)
+    .map(holeCoords => new Cesium.PolygonHierarchy(Cesium.Cartesian3.fromDegreesArray(holeCoords)))
+
   return new Cesium.PolygonHierarchy(
-    Cesium.Cartesian3.fromDegreesArray(ringToDegreesFlat(rings[0])),
-    rings.slice(1).map((hole) =>
-      new Cesium.PolygonHierarchy(
-        Cesium.Cartesian3.fromDegreesArray(ringToDegreesFlat(hole)),
-      ),
-    ),
+    Cesium.Cartesian3.fromDegreesArray(outerCoords),
+    holes
   )
 }
 
@@ -63,6 +67,7 @@ function addPolygon2d(
   props: CorridorProperties,
 ): void {
   const hierarchy = buildPolygonHierarchy(rings)
+  if (!hierarchy) return
   const entity = ds.entities.add({
     polygon: {
       hierarchy,
@@ -87,6 +92,7 @@ function addPolygon3d(
   props: Network3DProperties,
 ): void {
   const hierarchy = buildPolygonHierarchy(rings)
+  if (!hierarchy) return
   const entity = ds.entities.add({
     polygon: {
       hierarchy,
@@ -112,6 +118,7 @@ function addPolygonHdb(
   props: HdbFootprintProperties,
 ): void {
   const hierarchy = buildPolygonHierarchy(rings)
+  if (!hierarchy) return
   const entity = ds.entities.add({
     polygon: {
       hierarchy,
