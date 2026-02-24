@@ -1,0 +1,50 @@
+# Urban UAV Corridors - System Architecture
+
+This document describes the current architecture of the Urban UAV Corridors web application, outlining the frontend, backend, data layer, deployment environments, and user interaction scenarios.
+
+## 1. Frontend Architecture
+*   **Framework:** React 18 with TypeScript.
+*   **Build Tool:** Vite.
+*   **3D Map Engine:** CesiumJS. Extensively used for rendering 3D globes, 3D extruded polygons (Network), flat generic polygons (2D Corridors), and footprint extrusions (HDB Buildings).
+*   **UI Components:** Custom minimalist React components (no external UI libraries like MUI or Tailwind):
+    *   `LayerPanel.tsx`: Collapsible top-left panel to toggle layers, colors, and opacity.
+    *   `NavigationBall.tsx`: Bottom-right widget to control the Cesium camera (orbit, tilt, zoom to Singapore).
+    *   `InfoBar.tsx`: Bottom menu that slides up to display metadata when a geometric feature is clicked.
+*   **Data Fetching:** Standard `fetch` API located in `api.ts`. The application previously used dynamic bounding box queries (`mapBbox`), but natively loads the entire datasets on initial mount (`App.tsx`) to prevent infinite loading loops.
+
+## 2. Backend Architecture
+*   **Framework:** FastAPI (Python).
+*   **Server:** Uvicorn ASGI server.
+*   **Original Design:** Intended to connect to a PostGIS database to perform dynamic spatial queries (`ST_Intersects`, `ST_MakeEnvelope`) based on the frontend viewer's bounding box.
+*   **Current Design (Static File Serving):** Due to strict limitations and initialization failures with managed PostgreSQL databases on the deployment platform, the backend was completely refactored. The PostGIS dependency (`psycopg2`) was removed. 
+*   **Operation:** The FastAPI server now reads three large `.geojson` files from the local disk into RAM during the app startup (`lifespan` event) and serves these static JSON strings directly to the frontend via `/2d-corridors`, `/3d-network`, and `/hdb-footprints`.
+
+## 3. Data Used, Database, and API
+*   **Database:** None. The PostgreSQL and PostGIS architecture has been bypassed to immediately unblock production deployment.
+*   **Data Sources:**
+    *   `2D_safe_corridors_prioritized.geojson` (flat flight paths)
+    *   `3D_merged_network.geojson` (extruded 3D flight volumes with `min_altitude` and `max_altitude`)
+    *   `hdb_footprints.geojson` (10,000+ building footprints for contextual rendering)
+*   **API Endpoints:**
+    *   `GET /health`: Returns `{"status": "ok", "mode": "static_file_serving"}`.
+    *   `GET /2d-corridors`: Returns the complete 2D FeatureCollection.
+    *   `GET /3d-network`: Returns the complete 3D FeatureCollection.
+    *   `GET /hdb-footprints`: Returns the complete HDB FeatureCollection.
+
+## 4. Deployment
+*   **Frontend Deployment:** Vercel. 
+    *   URL: `https://urbanuav2-*.vercel.app`
+    *   Vercel acts as a static host for the compiled React SPA.
+*   **Backend Deployment:** Railway.
+    *   URL: `https://urban-uav-backend-production.up.railway.app`
+    *   Railway builds the Python FastAPI application directly from the `/fastapi` subfolder using a custom `Dockerfile`. The GeoJSON files had to be moved inside this `/fastapi` directory so the Docker build context could upload them to the Railway cloud runner.
+
+## 5. User Scenarios & Interactions
+1.  **Initial Load:** The user navigates to the Vercel URL. The React application mounts and immediately fetches all three GeoJSON datasets from the Railway API. A "Loading Spatial Data..." overlay is shown.
+2.  **Exploration:** The user sees a 3D globe centered on Singapore. They can use the mouse (drag to pan, scroll to zoom, ctrl+drag to tilt) or the `NavigationBall` arrows to explore the cityscape.
+3.  **Layer Toggling:** The user clicks the "Layers" tab in the top left. They can toggle the visibility of the 2D Corridors, 3D Network, and HDB Footprints. They can also dynamically change the color of the 2D Corridors and HDB Footprints using the native HTML color picker, or adjust the opacity using the sliders.
+4.  **Feature Interrogation:** The user physically clicks on a rendered polygon (e.g., a green 3D flight volume). The application highlights the specific polygon in yellow and opens the `InfoBar` at the bottom of the screen. The InfoBar dynamically generates a clean HTML table displaying all properties associated with that specific spatial feature (e.g., `priorityID`, `min_altitude`, `height`).
+
+---
+**Current Critical Bug Context:**
+The application is correctly fetching data and the UI is fundamentally sound. However, the raw `.geojson` files contain mathematically degenerate geometry (e.g., self-intersecting polygons, bow-tie shapes, or polygons with fewer than 3 unique vertices). When CesiumJS's lower-level WebGL WebWorkers attempt to triangulate these broken shapes to draw 3D extrusions, the engine crashes completely with `TypeError: Cannot read properties of undefined (reading 'x')`. Client-side deduplication was attempted but is insufficient; the data itself requires complex spatial healing (e.g., `ST_MakeValid`), or the frontend requires a completely different rendering strategy (e.g., rendering bounding boxes instead of raw polygons if the polygon is mathematically corrupt).
